@@ -70,7 +70,7 @@ int negamax(state_t state, int depth, int alpha, int beta, int color, bool use_t
     for(int move : state.get_valid_moves(col)){
         val = -negamax(state.move(col,move) , depth - 1, -beta, -alpha, -color);
         score = max(score , val);
-        alpha = max(alpha , val);
+        alpha = max(alpha , score);
         if (alpha >= beta) break;
     }
     expanded++;
@@ -82,40 +82,76 @@ bool mayorQue(int a, int b){
 }
 
 bool mayorIgual(int a, int b){
-    return a == b;
+    return a >= b;
 }
 
-int scout(state_t state, int depth, int color, bool use_tt = false){
+bool test(state_t state, int depth, int color, int score, bool (*condition)(int,int)){
+    generated++;
+    if (depth == 0 || state.terminal()){
+        return condition(state.value(),score);
+    }
+    bool col = color + 1;
+    for(int move : state.get_valid_moves(col)){
+        if (col && test(state.move(col,move) , depth - 1, -color, score , condition))
+            return true;
+        if (!col && !test(state.move(col,move) , depth - 1, -color, score , condition))
+            return false;
+    }
+    expanded++;
+    return !(col);
+}
+
+int scout(state_t state, int depth, int color, bool use_tt){
+    generated++;
     if (depth == 0 || state.terminal()){
         return state.value();
     }
     int score = 0;
     bool col = color + 1;
+    bool first = true;
     for(int move : state.get_valid_moves(col)){
-        if move is first move
-            score = scout(state.move(col,move) , depth - 1);
-        else
-            if state is Max && test(state.move(col,move) , depth -1, score , mayorQue())
-                score = scout(state.move(col,move) , depth - 1);
-            if state is Min && !test(state.move(col,move) , depth -1, score , mayorIgual())
-                score = scout(state.move(col,move) , depth - 1);
+        state_t child = state.move(col,move);
+        if (first){
+            score = scout(child , depth - 1, -color);
+            first = false;
+        }
+        else{
+            if (col && test(child , depth, -color, score , mayorQue))
+                score = scout(child , depth - 1, -color);
+            if (!col && !test(child , depth, -color, score , mayorIgual))
+                score = scout(child , depth - 1, -color);
+        }
     }
+    expanded++;
     return score;
 }
 
-bool test(state_t state, int depth, int color, int score, bool (*condition)(int,int))1{
+int negascout(state_t state, int depth, int alpha, int beta, int color, bool use_tt){
     if (depth == 0 || state.terminal()){
-        return state.value() > score;
+        return color * state.value();
     }
-
     bool col = color + 1;
+    bool first = true;
     for(int move : state.get_valid_moves(col)){
-        if state is Max && test(move , depth - 1, score , condition())
-            return true;
-        if state is Min && !test(move , depth - 1, score , condition())
-            return false;
+        generated++;
+        state_t child = state.move(col,move);
+        int score;
+        if (first){
+            first = false;
+            score = -negascout(child, depth -1, -beta, -alpha, -color);
+        }
+        else{
+            score = -negascout(child, depth -1, -alpha - 1, -alpha, -color);
+            if (alpha < score && score < beta){
+                score = -negascout(child, depth -1, -beta, -score, -color);
+            }
+        }
+        alpha = max(alpha,score);
+        if (alpha >= beta)
+            break;
     }
-    return !(state is Max);
+    expanded++;
+    return alpha;
 }
 
 int main(int argc, const char **argv) {
@@ -183,9 +219,9 @@ int main(int argc, const char **argv) {
             } else if( algorithm == 2 ) {
                 value = negamax(pv[i], 33, -INFINITY, INFINITY, color, use_tt);
             } else if( algorithm == 3 ) {
-                //value = scout(pv[i], 0, color, use_tt);
+                value = color * scout(pv[i], 33, color, use_tt);
             } else if( algorithm == 4 ) {
-                //value = negascout(pv[i], 0, -200, 200, color, use_tt);
+                value = negascout(pv[i], 33, -INFINITY, INFINITY, color, use_tt);
             }
         } catch( const bad_alloc &e ) {
             cout << "size TT[0]: size=" << TTable[0].size() << ", #buckets=" << TTable[0].bucket_count() << endl;
