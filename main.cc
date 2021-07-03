@@ -8,10 +8,11 @@
 #include <limits>
 #include "othello_cut.h" // won't work correctly until .h is fixed!
 #include "utils.h"
-
+#include <algorithm>
 #include <unordered_map>
-
 using namespace std;
+int INFINITY = numeric_limits<int>::max();
+
 
 unsigned expanded = 0;
 unsigned generated = 0;
@@ -43,6 +44,79 @@ int negamax(state_t state, int depth, int color, bool use_tt = false);
 int negamax(state_t state, int depth, int alpha, int beta, int color, bool use_tt = false);
 int scout(state_t state, int depth, int color, bool use_tt = false);
 int negascout(state_t state, int depth, int alpha, int beta, int color, bool use_tt = false);
+
+int negamax(state_t state, int depth, int color, bool use_tt){
+    generated++;
+    if (depth == 0 || state.terminal()){
+        return color * state.value();
+    }
+    int alpha = -INFINITY;
+    bool col = color + 1;
+    for(int move : state.get_valid_moves(col)){
+        alpha = max(alpha , -negamax(state.move(col,move) , depth - 1, -color));
+    }
+    expanded++;
+    return alpha;
+}
+
+int negamax(state_t state, int depth, int alpha, int beta, int color, bool use_tt){
+    generated++;
+    if (depth == 0 || state.terminal()){
+        return color * state.value();
+    }
+    int score = -INFINITY;
+    bool col = color + 1;
+    int val;
+    for(int move : state.get_valid_moves(col)){
+        val = -negamax(state.move(col,move) , depth - 1, -beta, -alpha, -color);
+        score = max(score , val);
+        alpha = max(alpha , val);
+        if (alpha >= beta) break;
+    }
+    expanded++;
+    return score;
+}
+
+bool mayorQue(int a, int b){
+    return a > b;
+}
+
+bool mayorIgual(int a, int b){
+    return a == b;
+}
+
+int scout(state_t state, int depth, int color, bool use_tt = false){
+    if (depth == 0 || state.terminal()){
+        return state.value();
+    }
+    int score = 0;
+    bool col = color + 1;
+    for(int move : state.get_valid_moves(col)){
+        if move is first move
+            score = scout(state.move(col,move) , depth - 1);
+        else
+            if state is Max && test(state.move(col,move) , depth -1, score , mayorQue())
+                score = scout(state.move(col,move) , depth - 1);
+            if state is Min && !test(state.move(col,move) , depth -1, score , mayorIgual())
+                score = scout(state.move(col,move) , depth - 1);
+    }
+    return score;
+}
+
+bool test(state_t state, int depth, int color, int score, bool (*condition)(int,int))1{
+    if (depth == 0 || state.terminal()){
+        return state.value() > score;
+    }
+
+    bool col = color + 1;
+    for(int move : state.get_valid_moves(col)){
+        if state is Max && test(move , depth - 1, score , condition())
+            return true;
+        if state is Min && !test(move , depth - 1, score , condition())
+            return false;
+    }
+    return !(state is Max);
+}
 
 int main(int argc, const char **argv) {
     state_t pv[128];
@@ -83,10 +157,18 @@ int main(int argc, const char **argv) {
         cout << "Negascout";
     cout << (use_tt ? " w/ transposition table" : "") << endl;
 
-    // Run algorithm along PV (bacwards)
+    // Run algorithm along PV (backwards)
     cout << "Moving along PV:" << endl;
     for( int i = 0; i <= npv; ++i ) {
-        //cout << pv[i];
+        // cout << pv[i];
+        // cout << "Negro" <<endl;
+        // for (int x : pv[i].get_valid_moves(true))
+        //     cout << x << " ";
+        // cout << endl;
+        // cout << "Blanco" <<endl;
+        // for (int x : pv[i].get_valid_moves(false))
+        //     cout << x << " ";
+        // cout << endl;
         int value = 0;
         TTable[0].clear();
         TTable[1].clear();
@@ -97,9 +179,9 @@ int main(int argc, const char **argv) {
 
         try {
             if( algorithm == 1 ) {
-                //value = negamax(pv[i], 0, color, use_tt);
+                value = negamax(pv[i], 33, color, use_tt);
             } else if( algorithm == 2 ) {
-                //value = negamax(pv[i], 0, -200, 200, color, use_tt);
+                value = negamax(pv[i], 33, -INFINITY, INFINITY, color, use_tt);
             } else if( algorithm == 3 ) {
                 //value = scout(pv[i], 0, color, use_tt);
             } else if( algorithm == 4 ) {
