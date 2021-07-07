@@ -46,3 +46,24 @@ Se debe entregar, en el repositorio, todo el código implementado,
 los resultados experimentales, y un pequeño informe que describa lo que
 hicieron y sus conclusiones.
 
+```vega-lite
+{
+    "$schema":
+    "https://vega.github.io/schema/vega-lite/v2.json",
+    "description": "A simple bar chart with embedded data.",
+    "data":{
+        "values":[
+            {"a":"A","b":20}
+        ]
+    },
+    "mark": "bar",
+    "encoding": {
+        "x": {"field": "a", "type": "ordinal"},
+        "y": {
+            "field": "b", "type": "quantitative"
+        },
+        "width": 500,
+        "height": 400
+    }
+}
+```
