@@ -3,6 +3,9 @@
 // Author: Blai Bonet
 // Last Revision: 1/11/16
 // Modified by: 
+// Juan Oropeza 15-11041
+// Carlos Rivero 13-11216
+// Jose Barrera 15-10123
 
 #include <iostream>
 #include <limits>
@@ -37,9 +40,6 @@ class hash_table_t : public unordered_map<state_t, stored_info_t, hash_function_
 
 hash_table_t TTable[2];
 
-//int maxmin(state_t state, int depth, bool use_tt);
-//int minmax(state_t state, int depth, bool use_tt = false);
-//int maxmin(state_t state, int depth, bool use_tt = false);
 int negamax(state_t state, int depth, int color, bool use_tt = false);
 int negamax(state_t state, int depth, int alpha, int beta, int color, bool use_tt = false);
 int scout(state_t state, int depth, int color, bool use_tt = false);
@@ -196,15 +196,6 @@ int main(int argc, const char **argv) {
     // Run algorithm along PV (backwards)
     cout << "Moving along PV:" << endl;
     for( int i = 0; i <= npv; ++i ) {
-        // cout << pv[i];
-        // cout << "Negro" <<endl;
-        // for (int x : pv[i].get_valid_moves(true))
-        //     cout << x << " ";
-        // cout << endl;
-        // cout << "Blanco" <<endl;
-        // for (int x : pv[i].get_valid_moves(false))
-        //     cout << x << " ";
-        // cout << endl;
         int value = 0;
         TTable[0].clear();
         TTable[1].clear();
